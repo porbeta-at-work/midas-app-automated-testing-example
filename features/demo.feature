@@ -1,10 +1,10 @@
-Feature: Browser Demo
+Feature: MiDAS Application Demo
   As a test automation framework
-  I want to demonstrate basic browser functionality
-  So that users can see the framework working
+  I want to demonstrate basic browser functionality with MiDAS
+  So that users can see the framework working with the actual application
 
   @demo
-  Scenario: Navigate to example.com and verify title
-    Given I navigate to the example website
+  Scenario: Navigate to MiDAS application and verify page loads
+    Given I navigate to the MiDAS application
     When I check the page title
-    Then I should see the correct example title
+    Then I should see a valid page title

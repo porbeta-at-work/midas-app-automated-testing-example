@@ -3,48 +3,13 @@
  */
 
 const TEST_DATA = {
-  // Valid user credentials
-  validUsers: {
-    admin: {
-      username: 'admin@example.com',
-      password: 'admin123',
-      displayName: 'Admin User'
-    },
-    testUser: {
-      username: 'testuser@example.com',
-      password: 'password123',
-      displayName: 'Test User'
-    },
-    standardUser: {
-      username: 'user@example.com',
-      password: 'user123',
-      displayName: 'Standard User'
-    }
-  },
-
-  // Invalid user credentials
-  invalidUsers: {
-    wrongPassword: {
-      username: 'testuser@example.com',
-      password: 'wrongpassword'
-    },
-    wrongUsername: {
-      username: 'invalid@example.com',
-      password: 'password123'
-    },
-    bothWrong: {
-      username: 'invalid@example.com',
-      password: 'wrongpassword'
-    }
-  },
-
   // Search test data
   searchTerms: {
     withResults: [
-      'automation',
-      'testing',
-      'playwright',
-      'javascript'
+      'data',
+      'research',
+      'information',
+      'file'
     ],
     noResults: [
       'xyzabc123nonexistent',
@@ -85,13 +50,9 @@ const TEST_DATA = {
 };
 
 const URLS = {
-  base: process.env.BASE_URL || 'http://localhost:3000',
-  login: '/login',
-  dashboard: '/dashboard',
+  base: process.env.BASE_URL || 'http://midas-webhosting-dev2.s3-website-us-gov-west-1.amazonaws.com',
   search: '/search',
-  profile: '/profile',
-  settings: '/settings',
-  logout: '/logout'
+  home: '/'
 };
 
 const TIMEOUTS = {
@@ -112,12 +73,6 @@ const BROWSER_CONFIG = {
 };
 
 const ERROR_MESSAGES = {
-  login: {
-    invalidCredentials: 'Invalid username or password',
-    usernameRequired: 'Username is required',
-    passwordRequired: 'Password is required',
-    bothRequired: 'Username and password required'
-  },
   search: {
     noResults: 'No results found',
     invalidQuery: 'Please enter a valid search term'
@@ -130,10 +85,6 @@ const ERROR_MESSAGES = {
 };
 
 const SUCCESS_MESSAGES = {
-  login: {
-    welcome: 'Welcome',
-    loginSuccessful: 'Login successful'
-  },
   search: {
     resultsFound: 'results found',
     searchCompleted: 'Search completed'
