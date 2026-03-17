@@ -25,7 +25,16 @@ class CustomWorld {
     // Check HEADED or DEBUG environment variable first, then parameters, default to headless
     const headed = process.env.HEADED === 'true' || process.env.DEBUG === 'true' || this.parameters.headless === false;
     const headless = !headed;
-    const slowMo = process.env.DEBUG === 'true' ? 500 : (this.parameters.slowMo || 0);
+    
+    // Configurable slow motion with multiple options
+    let slowMo = 0;
+    if (process.env.SLOW_MO) {
+      slowMo = parseInt(process.env.SLOW_MO) || 0;
+    } else if (process.env.DEBUG === 'true') {
+      slowMo = 500;
+    } else {
+      slowMo = this.parameters.slowMo || 0;
+    }
     
     const launchOptions = {
       headless,
