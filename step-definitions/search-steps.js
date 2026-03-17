@@ -282,6 +282,59 @@ When('I click the Compare button for DOC ID {string} in the Details section of r
   }
 });
 
+When('I open the Download File modal for Comparison row {int}', async function(rowNumber) {
+  // Use specific XPath pattern for Download File modal button on comparison row
+  const downloadButtonXPath = `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[1]/div/div[1]/button`;
+  
+  try {
+    console.log(`🎯 Opening Download File modal for Comparison row ${rowNumber} using XPath: ${downloadButtonXPath}`);
+    
+    // Wait for the button to be visible and clickable
+    const downloadButton = this.page.locator(`xpath=${downloadButtonXPath}`);
+    await downloadButton.waitFor({ state: 'visible', timeout: 10000 });
+    
+    // Click the Download File modal button
+    await downloadButton.click();
+    console.log(`✅ Clicked Download File modal button for Comparison row ${rowNumber}`);
+    
+    // Wait for modal to appear (look for common modal indicators)
+    console.log(`⏳ Waiting for Download File modal to appear...`);
+    const modalSelectors = [
+      '[role="dialog"]',
+      '.modal',
+      '[class*="modal"]',
+      '[aria-modal="true"]',
+      'text=Download'
+    ];
+    
+    let modalFound = false;
+    for (const selector of modalSelectors) {
+      try {
+        if (await this.page.locator(selector).isVisible({ timeout: 3000 })) {
+          console.log(`✅ Download File modal opened successfully (found: ${selector})`);
+          modalFound = true;
+          break;
+        }
+      } catch (error) {
+        // Try next selector
+      }
+    }
+    
+    if (!modalFound) {
+      console.log(`⚠️  Download File modal may have opened but standard modal indicators not detected`);
+    }
+    
+    // Small pause to see the action
+    if (process.env.SLOW_MO || process.env.HEADED === 'true') {
+      await this.page.waitForTimeout(500);
+    }
+    
+  } catch (error) {
+    console.error(`❌ Failed to open Download File modal for Comparison row ${rowNumber}:`, error.message);
+    throw new Error(`Could not open Download File modal for Comparison row ${rowNumber}: ${error.message}`);
+  }
+});
+
 Then('I should see a valid File for Comparison row {int}', async function(rowNumber) {
   // Use specific XPath pattern for the file link in comparison results
   const fileLinkXPath = `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/a`;
@@ -369,6 +422,106 @@ Then('I should see a valid File for Comparison row {int}', async function(rowNum
   } catch (error) {
     console.error(`❌ Failed to validate file link on row ${rowNumber}:`, error.message);
     throw new Error(`Could not validate file link on row ${rowNumber}: ${error.message}`);
+  }
+});
+
+Then('I can see {int} file\\(s) available in the Download File modal', async function(expectedFileCount) {
+  // Use specific XPath for the file list container in the Download File modal
+  const fileListXPath = '//*[@id="file-download-modal-description"]/div[2]/fieldset/div';
+  
+  try {
+    console.log(`🔍 Checking for ${expectedFileCount} file(s) in Download File modal using XPath: ${fileListXPath}`);
+    
+    // Dynamic waiting for the file list container with error detection
+    console.log(`⏳ Dynamically waiting for Download File modal content to load...`);
+    
+    let attempt = 0;
+    const maxAttempts = 60; // 60 seconds max wait time
+    let fileListContainer = null;
+    
+    while (attempt < maxAttempts) {
+      try {
+        // Check if the file list container is available first (positive check)
+        fileListContainer = this.page.locator(`xpath=${fileListXPath}`);
+        if (await fileListContainer.isVisible({ timeout: 1000 })) {
+          console.log(`👁️  File list container is now visible after ${attempt + 1} second(s)`);
+          break;
+        }
+        
+        // Only check for specific error messages (not CSS classes) after some time has passed
+        if (attempt > 10) { // Give it 10 seconds before checking for errors
+          const specificErrorSelectors = [
+            'text="Error loading files"',
+            'text="Failed to load"',
+            'text="No files found"',
+            'text="Access denied"',
+            'text="Server error"'
+          ];
+          
+          for (const selector of specificErrorSelectors) {
+            if (await this.page.locator(selector).isVisible({ timeout: 500 })) {
+              throw new Error(`Download File modal shows specific error: ${selector}`);
+            }
+          }
+        }
+        
+        // Check if modal is still open (if it disappeared, that's an error)
+        const modalStillOpen = await this.page.locator('[role="dialog"], .modal, [class*="modal"], [aria-modal="true"]').isVisible({ timeout: 500 });
+        if (!modalStillOpen && attempt > 5) { // Give modal time to fully load before checking
+          throw new Error('Download File modal closed unexpectedly while waiting for content');
+        }
+        
+        attempt++;
+        if (attempt % 10 === 0) {
+          console.log(`⏳ Still waiting for file list content... (${attempt}s elapsed)`);
+        }
+        
+        await this.page.waitForTimeout(1000); // Wait 1 second between checks
+        
+      } catch (error) {
+        if (error.message.includes('Download File modal') || error.message.includes('specific error')) {
+          throw error; // Re-throw our specific errors
+        }
+        // Continue waiting for other errors (element not found, etc.)
+        attempt++;
+        await this.page.waitForTimeout(1000);
+      }
+    }
+    
+    if (!fileListContainer || !await fileListContainer.isVisible({ timeout: 1000 })) {
+      throw new Error(`File list container did not load within ${maxAttempts} seconds`);
+    }
+    
+    // Count the number of child elements (files)
+    console.log(`📊 Counting files in Download File modal...`);
+    const fileElements = fileListContainer.locator('> *'); // Direct children only
+    const actualFileCount = await fileElements.count();
+    
+    console.log(`📊 Found ${actualFileCount} file(s) in Download File modal`);
+    
+    // Verify the count matches the expected number
+    if (actualFileCount === expectedFileCount) {
+      console.log(`✅ File count matches expectation: ${actualFileCount} file(s)`);
+    } else {
+      throw new Error(`Expected ${expectedFileCount} file(s) but found ${actualFileCount} file(s) in Download File modal`);
+    }
+    
+    // Optional: Log the file information for debugging
+    if (actualFileCount > 0) {
+      for (let i = 0; i < actualFileCount; i++) {
+        try {
+          const fileElement = fileElements.nth(i);
+          const fileText = await fileElement.textContent();
+          console.log(`📄 File ${i + 1}: ${fileText?.trim() || 'No text content'}`);
+        } catch (error) {
+          console.log(`📄 File ${i + 1}: Unable to read content`);
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error(`❌ Failed to verify file count in Download File modal:`, error.message);
+    throw new Error(`Could not verify ${expectedFileCount} file(s) in Download File modal: ${error.message}`);
   }
 });
 
