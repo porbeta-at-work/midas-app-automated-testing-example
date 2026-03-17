@@ -4,11 +4,18 @@
   "description": "Node.js test automation suite using Playwright and Cucumber",
   "main": "index.js",
   "scripts": {
-    "test": "cucumber-js features --require step-definitions --require utils/setup.js",
-    "test:headed": "set HEADED=true && npm test",
-    "test:debug": "set DEBUG=true && npm test",
-    "test:report": "cucumber-js features --require step-definitions --require utils/setup.js --format json:reports/cucumber-report.json",
-    "posttest:report": "node utils/generate-html-report.js"
+    "test": "cucumber-js features --require step-definitions --require utils/execution/setup.js",
+    "test:smoke": "cucumber-js features/search.feature --require step-definitions --require utils/execution/setup.js --tags @smoke",
+    "test:smoke:headed": "cross-env HEADED=true cucumber-js features/search.feature --require step-definitions --require utils/execution/setup.js --tags @smoke",
+    "test:headed": "cross-env HEADED=true npm test",
+    "test:debug": "cross-env DEBUG=true npm test",
+    "test:report": "cucumber-js features --require step-definitions --require utils/execution/setup.js --format json:reports/cucumber-report.json",
+    "posttest:report": "node utils/execution/generate-html-report.js",
+    "record": "node utils/recording/start-recorder.js",
+    "record:custom": "node utils/recording/test-recorder.js",
+    "recordings": "node utils/recording/step-integrator.js list",
+    "import:steps": "node utils/recording/step-integrator.js import",
+    "import:feature": "node utils/recording/step-integrator.js feature"
   },
   "keywords": [
     "playwright",
@@ -20,13 +27,14 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@playwright/test": "^1.42.1",
     "@cucumber/cucumber": "^10.3.1",
+    "@playwright/test": "^1.42.1",
     "playwright": "^1.42.1"
   },
   "devDependencies": {
-    "cucumber-html-reporter": "^7.1.1",
     "@types/node": "^20.11.24",
+    "cross-env": "^10.1.0",
+    "cucumber-html-reporter": "^7.1.1",
     "eslint": "^8.57.0"
   }
 }

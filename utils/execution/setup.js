@@ -22,8 +22,10 @@ class CustomWorld {
    */
   async launchBrowser() {
     const browserType = process.env.BROWSER || 'chromium';
-    const headless = this.parameters.headless !== false;
-    const slowMo = this.parameters.slowMo || 0;
+    // Check HEADED or DEBUG environment variable first, then parameters, default to headless
+    const headed = process.env.HEADED === 'true' || process.env.DEBUG === 'true' || this.parameters.headless === false;
+    const headless = !headed;
+    const slowMo = process.env.DEBUG === 'true' ? 500 : (this.parameters.slowMo || 0);
     
     const launchOptions = {
       headless,
@@ -34,6 +36,9 @@ class CustomWorld {
         '--disable-dev-shm-usage'
       ]
     };
+
+    console.log(`🌐 Launching ${browserType} browser ${headless ? '(headless)' : '(headed)'}`);
+    if (slowMo > 0) console.log(`⏱️  Slow motion: ${slowMo}ms`);
 
     switch (browserType.toLowerCase()) {
       case 'firefox':
