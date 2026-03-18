@@ -1,12 +1,12 @@
 Feature: Recorded MiDAS Test Scenario
   As a user of the MiDAS application
   I want to perform some baseline functionality
-  So that I can verify the application works as expected
+  So that I can verify the Home Search works as expected
 
   Background:
     Given I navigate to the MiDAS application
 
-  @search @smoke
+  @smoke
   Scenario: Check for Master and Flex results with valid files
     When I enter "BOGGIO" in the Last Name field
     And I enter "A1728308" in the A Number field
@@ -17,7 +17,7 @@ Feature: Recorded MiDAS Test Scenario
     And I should see a valid File for Comparison row 2
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check for AR-2 results with a valid file
     When I enter "KACINSKAS" in the Last Name field
     And I enter "A1532016" in the A Number field
@@ -27,7 +27,7 @@ Feature: Recorded MiDAS Test Scenario
     Then I should see a valid File for Comparison row 1
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check for MT results with a valid file
     When I enter "LEE" in the Last Name field
     And I enter "A1532016" in the A Number field
@@ -38,7 +38,7 @@ Feature: Recorded MiDAS Test Scenario
     Then I should see a valid File for Comparison row 1
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check for C-File results with a valid file
     And I enter "C6185040" in the C Number field
     And I click the "Search records" button
@@ -47,7 +47,7 @@ Feature: Recorded MiDAS Test Scenario
     Then I should see a valid File for Comparison row 1
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check for OM results with a valid file
     And I enter "OM14077" in the C Number field
     And I click the "Search records" button
@@ -56,7 +56,7 @@ Feature: Recorded MiDAS Test Scenario
     Then I should see a valid File for Comparison row 1
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check the Download File Modal results for Master
     When I enter "BOGGIO" in the Last Name field
     And I enter "A1728308" in the A Number field
@@ -66,7 +66,7 @@ Feature: Recorded MiDAS Test Scenario
     Then I can see 1 file(s) available in the Download File modal
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check the Download File Modal results for Flex
     When I enter "BOGGIO" in the Last Name field
     And I enter "A1728308" in the A Number field
@@ -76,7 +76,7 @@ Feature: Recorded MiDAS Test Scenario
     Then I can see 1 file(s) available in the Download File modal
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check the Download File Modal results for AR-2
     When I enter "KACINSKAS" in the Last Name field
     And I enter "A1532016" in the A Number field
@@ -87,7 +87,7 @@ Feature: Recorded MiDAS Test Scenario
     Then I can see 1 file(s) available in the Download File modal
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check the Download File Modal results for MT
     When I enter "LEE" in the Last Name field
     And I enter "A1532016" in the A Number field
@@ -99,7 +99,7 @@ Feature: Recorded MiDAS Test Scenario
     Then I can see 1 file(s) available in the Download File modal
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check the Download File Modal results for C-File
     And I enter "C6185040" in the C Number field
     And I click the "Search records" button
@@ -109,7 +109,7 @@ Feature: Recorded MiDAS Test Scenario
     Then I can see 10 file(s) available in the Download File modal
     And I should see the page has loaded
 
-  @search @smoke
+  @smoke
   Scenario: Check the Download File Modal results for OM
     And I enter "OM14077" in the C Number field
     And I click the "Search records" button

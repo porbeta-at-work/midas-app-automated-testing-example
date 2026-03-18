@@ -547,3 +547,10 @@ Then('I should be on a page containing {string}', async function(urlFragment) {
   expect(this.page.url()).toContain(urlFragment);
   console.log(`✅ URL contains: ${urlFragment}`);
 });
+
+Then('I should see a page title', async function() {
+  const title = await this.page.title();
+  expect(title).toBeTruthy();
+  expect(title.length).toBeGreaterThan(0);
+  console.log(`✅ Page has title: "${title}"`);
+});

@@ -6,8 +6,8 @@
   "scripts": {
     "test": "node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --format json:reports/cucumber-report.json",
     "test:headed": "cross-env HEADED=true SLOW_MO=500 node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --format json:reports/cucumber-report.json",
-    "test:smoke": "node utils/execution/run-with-report.js features/search.feature --require step-definitions --require utils/execution/setup.js --tags @smoke --format json:reports/cucumber-report.json",
-    "test:smoke:headed": "cross-env HEADED=true SLOW_MO=500 node utils/execution/run-with-report.js features/search.feature --require step-definitions --require utils/execution/setup.js --tags @smoke --format json:reports/cucumber-report.json",
+    "test:smoke": "node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --tags @smoke --format json:reports/cucumber-report.json",
+    "test:smoke:headed": "cross-env HEADED=true SLOW_MO=500 node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --tags @smoke --format json:reports/cucumber-report.json",
     "record": "node utils/recording/start-recorder.js"
   },
   "keywords": [
