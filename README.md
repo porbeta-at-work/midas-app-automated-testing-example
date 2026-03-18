@@ -1,123 +1,117 @@
 # Node.js Playwright + Cucumber Test Automation Framework
 
-A comprehensive test automation framework using **Playwright** for browser automation and **Cucumber** for Behavior-Driven Development (BDD) testing.
+A simplified test automation framework using **Playwright** for browser automation and **Cucumber** for Behavior-Driven Development (BDD) testing.
 
 ## 🚀 Features
 
-- **Cross-browser testing** - Chrome, Firefox, Safari support
-- **BDD with Cucumber** - Write tests in natural language
+- **Cross-browser testing** with Playwright
+- **BDD with Cucumber** - Write tests in natural language  
 - **Page Object Model** - Organized and maintainable code structure
-- **Parallel execution** - Run tests concurrently for faster feedback
-- **Rich reporting** - HTML and JSON reports with screenshots
-- **Multiple environments** - Easy configuration for different test environments
-- **Debug mode** - Step-by-step debugging capabilities
+- **HTML reporting** - Automatic report generation on every test run
+- **Simple recording** - Use Playwright codegen for recording interactions
 
 ## 📁 Project Structure
 
 ```
 midas-app-automated-testing/
-├── features/                    # Cucumber feature files
-│   ├── login.feature           # Login functionality tests
-│   └── search.feature          # Search functionality tests
-├── step-definitions/           # Step definition implementations
-│   ├── login-steps.js          # Login step definitions
-│   └── search-steps.js         # Search step definitions
-├── pages/                      # Page Object Model classes
-│   ├── BasePage.js            # Base page with common functionality
-│   ├── LoginPage.js           # Login page object
-│   ├── SearchPage.js          # Search page object
-│   └── DashboardPage.js       # Dashboard page object
-├── utils/                      # Utility functions and setup
-│   ├── setup.js               # Test setup and world configuration
-│   ├── test-data.js           # Test data and constants
-│   ├── test-helpers.js        # Common helper functions
-│   └── generate-html-report.js # HTML report generator
-├── reports/                    # Test execution reports
-├── screenshots/               # Screenshots of failed tests
-├── test-results/              # Playwright test artifacts
-├── .github/
-│   └── copilot-instructions.md # Project documentation
-├── package.json               # Dependencies and scripts
-├── playwright.config.js       # Playwright configuration
-├── cucumber.config.js         # Cucumber configuration
-└── README.md                  # This file
+├── features/                   # Cucumber feature files (.feature)
+├── step-definitions/          # JavaScript step definitions  
+├── pages/                     # Page Object Model classes
+├── utils/                     # Test utilities and configuration
+│   ├── execution/            # Test execution utilities & reporting
+│   └── recording/            # Simple recording tools  
+├── reports/                   # HTML test reports (auto-generated)
+├── screenshots/              # Screenshots (auto-generated)  
+├── package.json              # Dependencies and scripts
+├── playwright.config.js      # Playwright configuration
+├── cucumber.config.js        # Cucumber configuration  
+└── README.md                 # This file
 ```
 
 ## 🛠️ Prerequisites
 
 - **Node.js** (version 16 or higher)
 - **npm** (Node Package Manager)
-- **Git** (for version control)
 
 ## ⚙️ Installation
 
-1. **Clone the repository** (if applicable):
-   ```bash
-   git clone <repository-url>
-   cd midas-app-automated-testing
-   ```
-
-2. **Install dependencies**:
+1. **Install dependencies**:
    ```bash
    npm install
    ```
 
-3. **Install Playwright browsers**:
+2. **Install Playwright browsers**:
    ```bash
    npx playwright install
    ```
 
 ## 🚦 Running Tests
 
-### Basic Commands
+### Available Scripts
 
 ```bash
-# Run all tests
+# Run all tests with HTML reports  
 npm test
 
-# Run tests in headed mode (browser visible)
-npm run test:headed
+# Run all tests in headed mode (slow, browser visible) with reports
+npm run test:headed  
 
-# Run tests in debug mode (slow execution with console logs)
-npm run test:debug
+# Run smoke tests only with reports
+npm run test:smoke
 
-# Generate detailed HTML report
-npm run test:report
+# Run smoke tests in headed mode (slow) with reports  
+npm run test:smoke:headed
+
+# Launch Playwright codegen for recording new test interactions
+npm run record
 ```
 
-### Environment Variables
+### 📊 Reports
 
-Configure test execution using environment variables:
+All test scripts automatically generate HTML reports in the `reports/` directory:
+- `cucumber-report.html` - Main test report with results and screenshots
+- `cucumber-report.json` - Raw test data in JSON format
+
+Reports are **overwritten** on each test run.
+
+### 🎬 Recording New Tests
+
+Use the built-in recording functionality:
 
 ```bash
-# Browser selection
-BROWSER=chromium npm test  # chromium, firefox, or webkit
+npm run record
+```
 
-# Headless mode
-HEADED=true npm test       # Show browser during test execution
+This launches Playwright's codegen tool where you can:
+1. Interact with the application in the browser
+2. Copy the generated code manually as needed
+3. Integrate into your existing test files
 
-# Debug mode
-DEBUG=true npm test        # Enable detailed logging
+## 🏷️ Tags
 
-# Base URL
+Tests can be tagged for selective execution:
+- `@smoke` - Quick smoke tests
+- `@search` - Search functionality tests
+
+## ⚙️ Configuration
+
+- **Playwright config**: `playwright.config.js` - Browser and execution settings
+- **Cucumber config**: `cucumber.config.js` - BDD framework settings
+- **Test data**: `utils/execution/test-data.js` - Centralized test data
+- **Setup**: `utils/execution/setup.js` - Test environment initialization
+
+## 🔧 Environment Variables
+
+```bash
+# Run in headed mode
+HEADED=true npm test
+
+# Slow motion (milliseconds)  
+SLOW_MO=500 npm test
+
+# Base URL for testing
 BASE_URL=https://your-app.com npm test
-
-# Tags (run specific scenarios)
-TAGS="@smoke" npm test     # Run only smoke tests
-TAGS="not @skip" npm test  # Skip tests marked with @skip
 ```
-
-### Running Specific Tests
-
-```bash
-# Run specific feature file
-npx cucumber-js features/login.feature
-
-# Run tests with specific tags
-npx cucumber-js --tags "@smoke"
-
-# Run tests in parallel
-npx cucumber-js --parallel 2
 ```
 
 ## 📝 Writing Tests

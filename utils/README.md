@@ -1,17 +1,15 @@
 # Test Utilities
 
-This directory contains all utility functions and tools for the MiDAS test automation framework, organized by purpose.
+This directory contains utility functions and tools for the MiDAS test automation framework.
 
 ## Directory Structure
 
 ### 📹 `/recording/`
-**Test Recording Utilities** - Tools for creating automated tests by recording user interactions
+**Test Recording** - Simple tool for recording user interactions
 
-- `test-recorder.js` - Main recording engine that captures browser interactions  
-- `start-recorder.js` - CLI interface for easy recording sessions
-- `step-integrator.js` - Utility to merge recorded steps into existing test files
+- `start-recorder.js` - CLI interface that launches Playwright codegen for recording sessions
 
-**Usage**: `npm run record` to start recording, then import generated code
+**Usage**: `npm run record` to start recording, then manually copy generated code as needed
 
 ### 🧪 `/execution/`  
 **Test Execution Utilities** - Tools for running and managing automated tests
@@ -21,13 +19,18 @@ This directory contains all utility functions and tools for the MiDAS test autom
 - `test-helpers.js` - Common utility functions for test automation
 - `generate-html-report.js` - HTML report generation from test results
 
-**Usage**: These are automatically loaded during test execution
+**Usage**: These are automatically loaded during test execution and report generation
 
-## Workflow
+## Simplified Workflow
 
-### Creating New Tests:
-1. **Record**: Use recording utilities to capture user interactions
-2. **Import**: Use step-integrator to merge into test suite  
+### Available Scripts:
+- `npm test` - Run all tests with reports
+- `npm run test:headed` - Run all tests in headed mode (slow) with reports  
+- `npm run test:smoke` - Run smoke tests with reports
+- `npm run test:smoke:headed` - Run smoke tests in headed mode (slow) with reports
+- `npm run record` - Launch Playwright codegen for recording new interactions
+
+All test scripts automatically generate HTML reports in the `reports/` directory.  
 3. **Execute**: Use execution utilities to run tests
 4. **Report**: Generate HTML reports for results
 

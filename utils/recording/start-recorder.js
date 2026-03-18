@@ -1,41 +1,41 @@
 #!/usr/bin/env node
 
 /**
- * Test Recorder CLI
- * Easy-to-use command line interface for the test recorder
+ * Simple Test Recorder
+ * Launches Playwright codegen for recording test interactions
  */
 
-const TestRecorder = require('./test-recorder');
+const { spawn } = require('child_process');
 
 async function startRecording() {
   console.log('🎬 MiDAS Test Recorder');
   console.log('======================\n');
+  console.log('💡 This will open Playwright codegen for recording test interactions');
+  console.log('📝 Copy the generated code manually as needed\n');
 
-  const recorder = new TestRecorder();
+  const url = process.env.BASE_URL || 'http://midas-webhosting-dev2.s3-website-us-gov-west-1.amazonaws.com';
   
-  // Default options for MiDAS
-  const options = {
-    headless: false, // Always show browser for recording
-    url: process.env.BASE_URL || 'http://midas-webhosting-dev2.s3-website-us-gov-west-1.amazonaws.com',
-    recordingName: `midas-recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}`
-  };
+  console.log(`🌐 Target URL: ${url}`);
+  console.log('🔄 Starting Playwright codegen...\n');
 
-  try {
-    await recorder.startRecording(options);
+  // Launch Playwright codegen
+  const recorder = spawn('npx', ['playwright', 'codegen', url], {
+    stdio: 'inherit',
+    shell: true
+  });
 
-    // Handle Ctrl+C gracefully
-    process.on('SIGINT', async () => {
-      console.log('\n📡 Stopping recording...');
-      await recorder.stopRecording();
-      process.exit(0);
-    });
+  recorder.on('close', (code) => {
+    if (code === 0) {
+      console.log('✅ Recording session completed');
+    } else {
+      console.log(`❌ Recording session ended with code ${code}`);
+    }
+  });
 
-    // Keep process alive
-    setInterval(() => {}, 1000);
-  } catch (error) {
-    console.error('❌ Recording failed:', error.message);
-    process.exit(1);
-  }
+  recorder.on('error', (error) => {
+    console.error('❌ Failed to start recording:', error.message);
+    console.log('💡 Make sure Playwright is installed: npm install @playwright/test');
+  });
 }
 
 if (require.main === module) {

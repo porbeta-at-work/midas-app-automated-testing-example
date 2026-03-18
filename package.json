@@ -4,21 +4,11 @@
   "description": "Node.js test automation suite using Playwright and Cucumber",
   "main": "index.js",
   "scripts": {
-    "test": "cucumber-js features --require step-definitions --require utils/execution/setup.js",
-    "test:watch": "cross-env HEADED=true SLOW_MO=300 npm test",
-    "test:slow": "cross-env HEADED=true SLOW_MO=500 npm test",
-    "test:smoke": "cucumber-js features/search.feature --require step-definitions --require utils/execution/setup.js --tags @smoke",
-    "test:smoke:watch": "cross-env HEADED=true SLOW_MO=300 npm run test:smoke",
-    "test:smoke:headed": "cross-env HEADED=true cucumber-js features/search.feature --require step-definitions --require utils/execution/setup.js --tags @smoke",
-    "test:headed": "cross-env HEADED=true npm test",
-    "test:debug": "cross-env DEBUG=true npm test",
-    "test:report": "cucumber-js features --require step-definitions --require utils/execution/setup.js --format json:reports/cucumber-report.json",
-    "posttest:report": "node utils/execution/generate-html-report.js",
-    "record": "node utils/recording/start-recorder.js",
-    "record:custom": "node utils/recording/test-recorder.js",
-    "recordings": "node utils/recording/step-integrator.js list",
-    "import:steps": "node utils/recording/step-integrator.js import",
-    "import:feature": "node utils/recording/step-integrator.js feature"
+    "test": "node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --format json:reports/cucumber-report.json",
+    "test:headed": "cross-env HEADED=true SLOW_MO=500 node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --format json:reports/cucumber-report.json",
+    "test:smoke": "node utils/execution/run-with-report.js features/search.feature --require step-definitions --require utils/execution/setup.js --tags @smoke --format json:reports/cucumber-report.json",
+    "test:smoke:headed": "cross-env HEADED=true SLOW_MO=500 node utils/execution/run-with-report.js features/search.feature --require step-definitions --require utils/execution/setup.js --tags @smoke --format json:reports/cucumber-report.json",
+    "record": "node utils/recording/start-recorder.js"
   },
   "keywords": [
     "playwright",
