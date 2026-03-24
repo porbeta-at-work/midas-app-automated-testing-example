@@ -8,6 +8,10 @@
     "test:headed": "cross-env HEADED=true SLOW_MO=500 node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --format json:reports/cucumber-report.json",
     "test:smoke": "node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --tags @smoke --format json:reports/cucumber-report.json",
     "test:smoke:headed": "cross-env HEADED=true SLOW_MO=500 node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --tags @smoke --format json:reports/cucumber-report.json",
+    "test:smoke-search": "node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --tags @smoke-search --format json:reports/cucumber-report.json",
+    "test:smoke-search:headed": "cross-env HEADED=true SLOW_MO=500 node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --tags @smoke-search --format json:reports/cucumber-report.json",
+    "test:smoke-crosswalk": "node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --tags @smoke-crosswalk --format json:reports/cucumber-report.json",
+    "test:smoke-crosswalk:headed": "cross-env HEADED=true SLOW_MO=500 node utils/execution/run-with-report.js features --require step-definitions --require utils/execution/setup.js --tags @smoke-crosswalk --format json:reports/cucumber-report.json",
     "record": "node utils/recording/start-recorder.js"
   },
   "keywords": [
