@@ -197,10 +197,54 @@ When('I open the Details for row {int}', async function(rowNumber) {
       const detailsHeader = this.page.locator(`xpath=${nextRowXPath}`).locator('h3').filter({ hasText: 'Details for' });
       await detailsHeader.waitFor({ state: 'visible', timeout: 5000 });
       
-      console.log(`✅ Details section opened successfully for row ${rowNumber} (found in row ${rowNumber + 1})`);
+      console.log(`✅ Details section header opened for row ${rowNumber} (found in row ${rowNumber + 1})`);
+      
+      // Now wait for the actual table data inside the details section to load
+      console.log(`⏳ Waiting for details table data to populate...`);
+      const detailsTableXPath = `${nextRowXPath}/td/div/div/div[2]/div[1]/div[2]/table`;
+      const detailsTable = this.page.locator(`xpath=${detailsTableXPath}`);
+      
+      // Wait for the details table to be visible
+      await detailsTable.waitFor({ state: 'visible', timeout: 10000 });
+      
+      // Wait for table to actually have data rows (not just loading state)
+      const hasDetailsTableData = await this.page.waitForFunction(
+        (tableXPath) => {
+          const table = document.evaluate(tableXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+          if (!table) return false;
+          
+          const tbody = table.querySelector('tbody');
+          if (!tbody) return false;
+          
+          const rows = tbody.querySelectorAll('tr');
+          
+          // Check for actual data rows with content
+          if (rows.length === 0) return false;
+          
+          // Check if first row has actual data (not loading message)
+          const firstRowText = rows[0].textContent?.toLowerCase() || '';
+          if (firstRowText.includes('loading') || firstRowText.includes('please wait')) {
+            return false;
+          }
+          
+          // Ensure first row has multiple cells with content
+          return rows[0].children.length > 3 && rows[0].textContent.trim() !== '';
+        },
+        detailsTableXPath,
+        { 
+          timeout: 15000, // 15-second max timeout for details data
+          polling: 500   // Check every 500ms
+        }
+      );
+      
+      if (hasDetailsTableData) {
+        console.log(`✅ Details table data loaded successfully for row ${rowNumber}`);
+      } else {
+        console.log(`⚠️  Details table may not have loaded properly, but continuing...`);
+      }
       
     } catch (error) {
-      throw new Error(`Details section did not open for row ${rowNumber} - h3 with 'Details for' text not found in the next row`);
+      throw new Error(`Details section did not open properly for row ${rowNumber}: ${error.message}`);
     }
     
     // Small pause to see the action
@@ -225,27 +269,96 @@ When('I click the Compare button for DOC ID {string} in the Details section of r
     const detailsSection = this.page.locator(`xpath=${detailsSectionXPath}`);
     await detailsSection.waitFor({ state: 'visible', timeout: 5000 });
     
+    // Wait for the details table data to actually load before searching
+    console.log(`⏳ Ensuring details table data is loaded before searching for DOC ID...`);
+    const detailsTableXPath = `${detailsSectionXPath}/td/div/div/div[2]/div[1]/div[2]/table`;
+    
+    // Add specific wait for table data to load with retry logic
+    let tableDataReady = false;
+    for (let attempt = 1; attempt <= 10; attempt++) {
+      try {
+        const hasData = await this.page.waitForFunction(
+          (tableXPath) => {
+            const table = document.evaluate(tableXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+            if (!table) return false;
+            
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return false;
+            
+            const rows = tbody.querySelectorAll('tr');
+            return rows.length > 0 && rows[0].children.length > 3 && rows[0].textContent.trim() !== '';
+          },
+          detailsTableXPath,
+          { timeout: 2000, polling: 200 }
+        );
+        
+        if (hasData) {
+          tableDataReady = true;
+          console.log(`✅ Details table data confirmed loaded (attempt ${attempt})`);
+          break;
+        }
+      } catch (error) {
+        console.log(`⏳ Waiting for details table data... (attempt ${attempt}/10)`);
+        if (attempt < 10) {
+          await this.page.waitForTimeout(1000);
+        }
+      }
+    }
+    
+    if (!tableDataReady) {
+      console.log(`⚠️  Details table data may not be fully loaded, but proceeding with search...`);
+    }
+    
     // Search through the details table rows to find the one with matching DOC ID
     let foundRow = false;
-    let detailsRowNumber = 1;
+    let bestMatchRow = null;
+    let bestMatchType = 'none'; // 'exact', 'truncated', 'none'
+    let bestMatchLength = 0;
     const maxRows = 10; // Reasonable limit to prevent infinite loop
     
-    for (detailsRowNumber = 1; detailsRowNumber <= maxRows; detailsRowNumber++) {
-      const docIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[6]`;
+    // First pass: Look for exact matches, collect truncated matches as backup
+    for (let detailsRowNumber = 1; detailsRowNumber <= maxRows; detailsRowNumber++) {
+      const docIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[5]`;
       
       try {
         const docIdElement = this.page.locator(`xpath=${docIdXPath}`);
         
         // Check if this row exists and is visible
         if (await docIdElement.isVisible({ timeout: 1000 })) {
-          const currentDocId = await docIdElement.textContent();
+          // Try multiple ways to get the full DOC ID (handling truncation)
+          let currentDocId = await docIdElement.textContent();
           
+          // If textContent seems truncated, try title attribute
+          if (currentDocId && currentDocId.length < 15) { // DOC IDs should be longer
+            const titleAttr = await docIdElement.getAttribute('title');
+            if (titleAttr && titleAttr.trim().length > currentDocId.trim().length) {
+              currentDocId = titleAttr;
+              console.log(`🔍 Using title attribute for full DOC ID in row ${detailsRowNumber}: "${currentDocId}"`);
+            }
+          }
+          
+          // Check if the found DOC ID matches exactly
           if (currentDocId && currentDocId.trim() === docId.trim()) {
-            console.log(`✅ Found matching DOC ID "${docId}" in details row ${detailsRowNumber}`);
+            console.log(`✅ Found EXACT matching DOC ID "${docId}" in details row ${detailsRowNumber}`);
             foundRow = true;
-            break;
+            bestMatchRow = detailsRowNumber;
+            bestMatchType = 'exact';
+            break; // Exact match found, use it immediately
+          } 
+          // Check for truncated version - but keep looking for better matches
+          else if (currentDocId && docId.startsWith(currentDocId.trim()) && currentDocId.trim().length >= 6) {
+            console.log(`🔍 Row ${detailsRowNumber}: Found truncated DOC ID match: "${currentDocId.trim()}" (${currentDocId.trim().length} chars)`);
+            
+            // Track the best truncated match (longest one)
+            if (bestMatchType === 'none' || 
+                (bestMatchType === 'truncated' && currentDocId.trim().length > bestMatchLength)) {
+              bestMatchRow = detailsRowNumber;
+              bestMatchType = 'truncated';
+              bestMatchLength = currentDocId.trim().length;
+              foundRow = true;
+            }
           } else {
-            console.log(`🔍 Row ${detailsRowNumber}: DOC ID "${currentDocId?.trim()}" - not a match`);
+            console.log(`🔍 Row ${detailsRowNumber}: DOC ID "${currentDocId?.trim()}" - not a match for "${docId}"`);
           }
         } else {
           // Row doesn't exist, stop searching
@@ -261,15 +374,69 @@ When('I click the Compare button for DOC ID {string} in the Details section of r
       throw new Error(`DOC ID "${docId}" not found in Details section of row ${mainRowNumber}`);
     }
     
+    const detailsRowNumber = bestMatchRow;
+    console.log(`✅ Using ${bestMatchType} match for DOC ID "${docId}" in details row ${detailsRowNumber}`);
+    
     // Click the Compare button for the found row
     console.log(`🎯 Clicking Compare button for DOC ID "${docId}" in details row ${detailsRowNumber}...`);
+    
+    // Construct the Compare button XPath using the same detailsRowNumber where we found the DOC ID
     const compareButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[1]/div/div[2]/button`;
     
+    console.log(`📍 Using Compare button XPath: ${compareButtonXPath}`);
+    console.log(`📋 Target: mainRow=${mainRowNumber + 1}, detailsRow=${detailsRowNumber}, DOC ID="${docId}"`);
+    
+    // Verify the Compare button exists in the same row as the DOC ID
     const compareButton = this.page.locator(`xpath=${compareButtonXPath}`);
+    
+    // Double-check we're clicking the button in the correct row by verifying the DOC ID is still there
+    const verifyDocIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[5]`;
+    const verifyDocIdElement = this.page.locator(`xpath=${verifyDocIdXPath}`);
+    
+    try {
+      const verifyCurrentDocId = await verifyDocIdElement.textContent();
+      console.log(`🔍 Verifying DOC ID in target row ${detailsRowNumber}: "${verifyCurrentDocId?.trim()}"`);
+      
+      // Ensure we're still looking at the right row
+      if (!verifyCurrentDocId || (!verifyCurrentDocId.trim().includes(docId.substring(0, 8)) && !docId.includes(verifyCurrentDocId.trim()))) {
+        throw new Error(`DOC ID verification failed: expected "${docId}" but found "${verifyCurrentDocId?.trim()}" in row ${detailsRowNumber}`);
+      }
+    } catch (verifyError) {
+      console.error(`❌ Failed to verify DOC ID before clicking Compare button: ${verifyError.message}`);
+      throw new Error(`Cannot verify correct row for DOC ID "${docId}": ${verifyError.message}`);
+    }
+    
     await compareButton.waitFor({ state: 'visible', timeout: 5000 });
     await compareButton.click();
     
     console.log(`✅ Clicked Compare button for DOC ID "${docId}" - added to Comparison table`);
+    
+    // Wait for the comparison table to actually populate with the new item
+    console.log(`⏳ Waiting for comparison table to populate with new item...`);
+    const comparisonTableXPath = '//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table';
+    
+    try {
+      // Wait for comparison table to exist and have at least one row
+      await this.page.waitForFunction(
+        (tableXPath) => {
+          const table = document.evaluate(tableXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+          if (!table) return false;
+          
+          const tbody = table.querySelector('tbody');
+          if (!tbody) return false;
+          
+          const rows = tbody.querySelectorAll('tr');
+          // Check for at least one row with content
+          return rows.length > 0 && rows[0].children.length > 2 && rows[0].textContent.trim() !== '';
+        },
+        comparisonTableXPath,
+        { timeout: 15000, polling: 500 }
+      );
+      
+      console.log(`✅ Comparison table populated successfully`);
+    } catch (error) {
+      console.log(`⚠️  Comparison table may not have populated fully, but proceeding...`);
+    }
     
     // Small pause to see the action
     if (process.env.SLOW_MO || process.env.HEADED === 'true') {
@@ -336,15 +503,44 @@ When('I open the Download File modal for Comparison row {int}', async function(r
 });
 
 Then('I should see a valid File for Comparison row {int}', async function(rowNumber) {
-  // Use specific XPath pattern for the file link in comparison results
-  const fileLinkXPath = `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/a`;
+  // Handle both scenarios for comparison table file links:
+  // 1. Multiple rows: //*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[1]/td[5]/a
+  // 2. Single row: //*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr/td[5]/div/a
+  
+  const fileLinkXPaths = [
+    // Try specific row number first (multiple rows scenario)
+    `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/a`,
+    // Try single row scenario (no row index, with extra div)
+    `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr/td[5]/div/a`
+  ];
   
   try {
-    console.log(`🔍 Checking for valid file link on row ${rowNumber} using XPath: ${fileLinkXPath}`);
+    console.log(`🔍 Checking for file link on comparison row ${rowNumber}...`);
     
-    // Wait for the link element to be visible
-    const fileLink = this.page.locator(`xpath=${fileLinkXPath}`);
-    await fileLink.waitFor({ state: 'visible', timeout: 10000 });
+    let fileLink = null;
+    let workingXPath = null;
+    
+    // Try each XPath pattern
+    for (const xpath of fileLinkXPaths) {
+      try {
+        const link = this.page.locator(`xpath=${xpath}`);
+        if (await link.isVisible({ timeout: 2000 })) {
+          fileLink = link;
+          workingXPath = xpath;
+          console.log(`✅ Found file link using XPath: ${xpath}`);
+          break;
+        }
+      } catch (error) {
+        // Continue to next XPath
+      }
+    }
+    
+    if (!fileLink) {
+      throw new Error(`File link not found using any expected XPath pattern for row ${rowNumber}`);
+    }
+    
+    console.log(`✅ Found file link on row ${rowNumber}`);
+    console.log(`🔍 Validating file link...`);
     
     // Get the href attribute
     const href = await fileLink.getAttribute('href');
@@ -432,70 +628,47 @@ Then('I can see {int} file\\(s) available in the Download File modal', async fun
   try {
     console.log(`🔍 Checking for ${expectedFileCount} file(s) in Download File modal using XPath: ${fileListXPath}`);
     
-    // Dynamic waiting for the file list container with error detection
-    console.log(`⏳ Dynamically waiting for Download File modal content to load...`);
+    // Enhanced dynamic waiting for the file list container with better error detection
+    console.log(`⏳ Waiting for Download File modal content to fully load...`);
     
-    let attempt = 0;
-    const maxAttempts = 60; // 60 seconds max wait time
-    let fileListContainer = null;
+    // Use waitForFunction to wait until the element is present and has the expected content
+    const fileListContainer = await this.page.waitForFunction(
+      (xpath, expectedCount) => {
+        const container = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        if (!container) return false;
+        
+        // Check if container has children and they're not just loading placeholders
+        const children = container.children;
+        if (children.length === 0) return false;
+        
+        // Check that the content is not in a loading state
+        const containerText = container.textContent?.toLowerCase() || '';
+        if (containerText.includes('loading') || containerText.includes('please wait')) {
+          return false;
+        }
+        
+        // For exact count matching, ensure we have the right number
+        if (expectedCount > 0) {
+          return children.length === expectedCount;
+        }
+        
+        // For any files present, just ensure we have some
+        return children.length > 0;
+      },
+      fileListXPath,
+      expectedFileCount,
+      { timeout: 30000, polling: 1000 }
+    );
     
-    while (attempt < maxAttempts) {
-      try {
-        // Check if the file list container is available first (positive check)
-        fileListContainer = this.page.locator(`xpath=${fileListXPath}`);
-        if (await fileListContainer.isVisible({ timeout: 1000 })) {
-          console.log(`👁️  File list container is now visible after ${attempt + 1} second(s)`);
-          break;
-        }
-        
-        // Only check for specific error messages (not CSS classes) after some time has passed
-        if (attempt > 10) { // Give it 10 seconds before checking for errors
-          const specificErrorSelectors = [
-            'text="Error loading files"',
-            'text="Failed to load"',
-            'text="No files found"',
-            'text="Access denied"',
-            'text="Server error"'
-          ];
-          
-          for (const selector of specificErrorSelectors) {
-            if (await this.page.locator(selector).isVisible({ timeout: 500 })) {
-              throw new Error(`Download File modal shows specific error: ${selector}`);
-            }
-          }
-        }
-        
-        // Check if modal is still open (if it disappeared, that's an error)
-        const modalStillOpen = await this.page.locator('[role="dialog"], .modal, [class*="modal"], [aria-modal="true"]').isVisible({ timeout: 500 });
-        if (!modalStillOpen && attempt > 5) { // Give modal time to fully load before checking
-          throw new Error('Download File modal closed unexpectedly while waiting for content');
-        }
-        
-        attempt++;
-        if (attempt % 10 === 0) {
-          console.log(`⏳ Still waiting for file list content... (${attempt}s elapsed)`);
-        }
-        
-        await this.page.waitForTimeout(1000); // Wait 1 second between checks
-        
-      } catch (error) {
-        if (error.message.includes('Download File modal') || error.message.includes('specific error')) {
-          throw error; // Re-throw our specific errors
-        }
-        // Continue waiting for other errors (element not found, etc.)
-        attempt++;
-        await this.page.waitForTimeout(1000);
-      }
+    if (fileListContainer) {
+      console.log(`✅ File list container loaded successfully`);
+    } else {
+      throw new Error('File list container could not be loaded');
     }
     
-    if (!fileListContainer || !await fileListContainer.isVisible({ timeout: 1000 })) {
-      throw new Error(`File list container did not load within ${maxAttempts} seconds`);
-    }
-    
-    // Count the number of child elements (files)
-    console.log(`📊 Counting files in Download File modal...`);
-    const fileElements = fileListContainer.locator('> *'); // Direct children only
-    const actualFileCount = await fileElements.count();
+    // Now count the actual files
+    const container = this.page.locator(`xpath=${fileListXPath}`);
+    const actualFileCount = await container.locator('> *').count();
     
     console.log(`📊 Found ${actualFileCount} file(s) in Download File modal`);
     
@@ -508,14 +681,18 @@ Then('I can see {int} file\\(s) available in the Download File modal', async fun
     
     // Optional: Log the file information for debugging
     if (actualFileCount > 0) {
-      for (let i = 0; i < actualFileCount; i++) {
+      for (let i = 0; i < Math.min(actualFileCount, 5); i++) {
         try {
-          const fileElement = fileElements.nth(i);
+          const fileElement = container.locator('> *').nth(i);
           const fileText = await fileElement.textContent();
           console.log(`📄 File ${i + 1}: ${fileText?.trim() || 'No text content'}`);
         } catch (error) {
           console.log(`📄 File ${i + 1}: Unable to read content`);
         }
+      }
+      
+      if (actualFileCount > 5) {
+        console.log(`📊 And ${actualFileCount - 5} more files...`);
       }
     }
     

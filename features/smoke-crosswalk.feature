@@ -61,7 +61,7 @@ Feature: MiDAS Home Search scenarios
 
   @smoke @smoke-crosswalk
   Scenario: Check OM search returns expected results
-    When I select "OM" in the crosswalk Source field
+    When I select "C-File" in the crosswalk Source field
     And I enter "OM14077" in the crosswalk C Number field
     And I click the "Search crosswalk" button
     Then I should see 1 row(s) in the Crosswalk Search Results
@@ -69,7 +69,7 @@ Feature: MiDAS Home Search scenarios
 
   @smoke @smoke-crosswalk
   Scenario: Check for OM search returns expected DOC ID
-    When I select "OM" in the crosswalk Source field
+    When I select "C-File" in the crosswalk Source field
     And I enter "OM14077" in the crosswalk C Number field
     And I click the "Search crosswalk" button
     And I open the Details for row 1

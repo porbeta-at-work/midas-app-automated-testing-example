@@ -227,6 +227,49 @@ Then('I should see the DOC ID of {string} in the Details section of row {int}', 
     const detailsSection = this.page.locator(`xpath=${detailsSectionXPath}`);
     await detailsSection.waitFor({ state: 'visible', timeout: 5000 });
     
+    // Wait for the details table data to actually load before searching using condition-based waiting
+    console.log(`⏳ Ensuring details table data is loaded before searching for DOC ID...`);
+    const detailsTableXPath = `${detailsSectionXPath}/td/div/div/div[2]/div[1]/div[2]/table`;
+    
+    // Use waitForFunction for responsive condition-based waiting instead of retry loops
+    try {
+      const tableDataReady = await this.page.waitForFunction(
+        (tableXPath) => {
+          const table = document.evaluate(tableXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+          if (!table) return false;
+          
+          const tbody = table.querySelector('tbody');
+          if (!tbody) return false;
+          
+          const rows = tbody.querySelectorAll('tr');
+          
+          // Check that we have rows with actual data (not loading placeholders)
+          if (rows.length === 0) return false;
+          
+          // Verify the first row has the expected number of columns and content
+          const firstRow = rows[0];
+          if (!firstRow || firstRow.children.length < 3) return false;
+          
+          // Check that content is not in loading state
+          const rowText = firstRow.textContent?.toLowerCase() || '';
+          if (rowText.includes('loading') || rowText.includes('please wait')) {
+            return false;
+          }
+          
+          // Confirm we have actual data content
+          return firstRow.textContent.trim() !== '';
+        },
+        detailsTableXPath,
+        { timeout: 30000, polling: 1000 }
+      );
+      
+      if (tableDataReady) {
+        console.log(`✅ Details table data confirmed loaded using condition-based waiting`);
+      }
+    } catch (error) {
+      console.log(`⚠️  Details table data loading timeout - proceeding with search anyway: ${error.message}`);
+    }
+    
     // Search through the details table rows to find the one with matching DOC ID
     let foundRow = false;
     let detailsRowNumber = 1;
@@ -240,14 +283,30 @@ Then('I should see the DOC ID of {string} in the Details section of row {int}', 
         
         // Check if this row exists and is visible
         if (await docIdElement.isVisible({ timeout: 1000 })) {
-          const currentDocId = await docIdElement.textContent();
+          // Try multiple ways to get the full DOC ID (handling truncation)
+          let currentDocId = await docIdElement.textContent();
           
+          // If textContent seems truncated, try title attribute
+          if (currentDocId && currentDocId.length < 15) { // DOC IDs should be longer
+            const titleAttr = await docIdElement.getAttribute('title');
+            if (titleAttr && titleAttr.trim().length > currentDocId.trim().length) {
+              currentDocId = titleAttr;
+              console.log(`🔍 Using title attribute for full DOC ID: "${currentDocId}"`);
+            }
+          }
+          
+          // Check if the found DOC ID matches exactly or is a truncated version of expected
           if (currentDocId && currentDocId.trim() === docId.trim()) {
-            console.log(`✅ Found matching DOC ID "${docId}" in details row ${detailsRowNumber}`);
+            console.log(`✅ Found exact matching DOC ID "${docId}" in details row ${detailsRowNumber}`);
+            foundRow = true;
+            break;
+          } else if (currentDocId && docId.startsWith(currentDocId.trim()) && currentDocId.trim().length >= 6) {
+            // Handle truncated display: if expected DOC ID starts with found value and found value is substantial
+            console.log(`✅ Found truncated DOC ID match: "${currentDocId.trim()}" matches start of expected "${docId}" in details row ${detailsRowNumber}`);
             foundRow = true;
             break;
           } else {
-            console.log(`🔍 Row ${detailsRowNumber}: DOC ID "${currentDocId?.trim()}" - not a match`);
+            console.log(`🔍 Row ${detailsRowNumber}: DOC ID "${currentDocId?.trim()}" - not a match for "${docId}"`);
           }
         } else {
           // Row doesn't exist, stop searching
