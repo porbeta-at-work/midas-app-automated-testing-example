@@ -79,15 +79,97 @@ When('I enter {string} in the C Number field', async function(value) {
   }
 });
 
-When('I click the "Search records" button', async function() {
-  // Use specific XPath for MiDAS Search records button
-  const searchButtonXPath = '//*[@id="accordion-content-search"]/div/div[11]/button';
-  const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table';
+When('I enter {string} in the DOC ID field', async function(value) {
+  const inputXPath = '//*[@id="doc_id"]';
+  let filled = false;
   
   try {
-    console.log(`🎯 Clicking search button using XPath: ${searchButtonXPath}`);
-    await this.page.locator(`xpath=${searchButtonXPath}`).click();
-    console.log('✅ Clicked search button');
+      const element = this.page.locator(`xpath=${inputXPath}`).first();
+      if (await element.isVisible({ timeout: 1000 })) {
+        await element.fill(value);
+        filled = true;
+        console.log(`✅ Entered: ${value} in DOC ID field`);
+        // Small pause to see the action
+        if (process.env.SLOW_MO || process.env.HEADED === 'true') {
+          await this.page.waitForTimeout(300);
+        }
+      }
+    } catch (error) {
+      // Try next selector
+    }
+  
+  if (!filled) {
+    throw new Error('Could not find DOC ID field');
+  }
+});
+
+When('I click the Advanced Search Options checkbox', async function() {
+  const checkboxXPath = '//*[@id="accordion-content-search"]/div/label/input';
+  
+  try {
+    console.log(`🎯 Clicking Advanced Search Options checkbox using XPath: ${checkboxXPath}`);
+    const element = this.page.locator(`xpath=${checkboxXPath}`).first();
+    
+    // Wait for the element to be visible and clickable
+    await element.waitFor({ state: 'visible', timeout: 5000 });
+    await element.click();
+    console.log('✅ Clicked Advanced Search Options checkbox');
+    
+    // Small pause to see the action
+    if (process.env.SLOW_MO || process.env.HEADED === 'true') {
+      await this.page.waitForTimeout(300);
+    }
+    
+  } catch (error) {
+    console.error('❌ Failed to click Advanced Search Options checkbox:', error.message);
+    throw new Error(`Could not click Advanced Search Options checkbox: ${error.message}`);
+  }
+});
+
+When('I click the "Search records" button', async function() {
+  // XPath options for MiDAS Search records button (changes based on advanced search state)
+  const advancedSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[26]/button'; // When advanced search is expanded
+  const basicSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[11]/button';     // When advanced search is collapsed
+  const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table';
+  
+  let buttonClicked = false;
+  let usedXPath = '';
+  
+  try {
+    // Try advanced search button first (when Advanced Search Options are expanded)
+    try {
+      const advancedButton = this.page.locator(`xpath=${advancedSearchButtonXPath}`).first();
+      if (await advancedButton.isVisible({ timeout: 1000 })) {
+        console.log(`🎯 Clicking search button using advanced XPath: ${advancedSearchButtonXPath}`);
+        await advancedButton.click();
+        buttonClicked = true;
+        usedXPath = advancedSearchButtonXPath;
+        console.log('✅ Clicked search button (advanced search mode)');
+      }
+    } catch (error) {
+      // Try basic search button if advanced one fails
+    }
+    
+    // If advanced search button wasn't found or clicked, try basic search button
+    if (!buttonClicked) {
+      try {
+        const basicButton = this.page.locator(`xpath=${basicSearchButtonXPath}`).first();
+        if (await basicButton.isVisible({ timeout: 1000 })) {
+          console.log(`🎯 Clicking search button using basic XPath: ${basicSearchButtonXPath}`);
+          await basicButton.click();
+          buttonClicked = true;
+          usedXPath = basicSearchButtonXPath;
+          console.log('✅ Clicked search button (basic search mode)');
+        }
+      } catch (error) {
+        // Will handle below if no button was clicked
+      }
+    }
+    
+    // If neither button was found/clicked, throw error
+    if (!buttonClicked) {
+      throw new Error('Could not find search button in either advanced or basic search mode');
+    }
     
     // Dynamic waiting for results table with loading indicators
     console.log('⏳ Waiting for results table to load...');
@@ -255,6 +337,66 @@ When('I open the Details for row {int}', async function(rowNumber) {
   } catch (error) {
     console.error(`❌ Failed to open Details for row ${rowNumber}:`, error.message);
     throw new Error(`Could not open Details for row ${rowNumber}: ${error.message}`);
+  }
+});
+
+When('I close the Details for row {int}', async function(rowNumber) {
+  // Use the same XPath pattern for Details button (it's a toggle button)
+  const detailsButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber}]/td[1]/button`;
+  
+  try {
+    console.log(`🎯 Closing Details for row ${rowNumber} using XPath: ${detailsButtonXPath}`);
+    
+    // Wait for the button to be visible and clickable
+    const detailsButton = this.page.locator(`xpath=${detailsButtonXPath}`);
+    await detailsButton.waitFor({ state: 'visible', timeout: 10000 });
+    
+    // Click the Details button to close the details section
+    await detailsButton.click();
+    console.log(`✅ Clicked Details button to close details for row ${rowNumber}`);
+    
+    // Verify that the details section closes by checking that the h3 'Details for' is no longer visible
+    console.log(`🔍 Verifying details section closed for row ${rowNumber}...`);
+    
+    try {
+      // Look for h3 containing "Details for" text specifically in the next row after the clicked row
+      const nextRowXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber + 1}]`;
+      const detailsHeader = this.page.locator(`xpath=${nextRowXPath}`).locator('h3').filter({ hasText: 'Details for' });
+      
+      // Wait for the details header to disappear (should become hidden)
+      await detailsHeader.waitFor({ state: 'hidden', timeout: 5000 });
+      console.log(`✅ Details section successfully closed for row ${rowNumber}`);
+      
+    } catch (error) {
+      // If waiting for 'hidden' fails, try alternative verification
+      const nextRowXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber + 1}]`;
+      const nextRowElement = this.page.locator(`xpath=${nextRowXPath}`);
+      
+      // Check if the next row is no longer visible or doesn't contain details
+      const isNextRowVisible = await nextRowElement.isVisible({ timeout: 2000 }).catch(() => false);
+      
+      if (!isNextRowVisible) {
+        console.log(`✅ Details section closed - details row is no longer visible for row ${rowNumber}`);
+      } else {
+        // Check if the next row still contains details content
+        const hasDetailsContent = await nextRowElement.locator('h3').filter({ hasText: 'Details for' }).isVisible({ timeout: 1000 }).catch(() => false);
+        
+        if (!hasDetailsContent) {
+          console.log(`✅ Details section closed for row ${rowNumber}`);
+        } else {
+          throw new Error(`Details section did not close properly for row ${rowNumber}`);
+        }
+      }
+    }
+    
+    // Small pause to see the action
+    if (process.env.SLOW_MO || process.env.HEADED === 'true') {
+      await this.page.waitForTimeout(500);
+    }
+    
+  } catch (error) {
+    console.error(`❌ Failed to close Details for row ${rowNumber}:`, error.message);
+    throw new Error(`Could not close Details for row ${rowNumber}: ${error.message}`);
   }
 });
 
@@ -510,6 +652,8 @@ Then('I should see a valid File for Comparison row {int}', async function(rowNum
   const fileLinkXPaths = [
     // Try specific row number first (multiple rows scenario)
     `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/a`,
+    // Try specific row number with extra div wrapper
+    `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/div/a`,
     // Try single row scenario (no row index, with extra div)
     `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr/td[5]/div/a`
   ];

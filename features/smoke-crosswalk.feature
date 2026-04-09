@@ -1,7 +1,7 @@
 Feature: MiDAS Home Search scenarios
   As a user of the MiDAS application
   I want to perform some baseline functionality
-  So that I can verify the Home Search works as expected
+  So that I can verify the Crosswalk Search works as expected
 
   Background:
     Given I navigate to the MiDAS crosswalk tab
