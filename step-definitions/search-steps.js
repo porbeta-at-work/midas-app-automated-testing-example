@@ -765,6 +765,132 @@ Then('I should see a valid File for Comparison row {int}', async function(rowNum
   }
 });
 
+Then('I should see {int} valid Files for Comparison row {int}', async function(expectedFileCount, rowNumber) {
+  // Validate multiple file links in a single comparison table row
+  // Uses XPath pattern: //*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/div/a[${loopIteration}]
+  
+  try {
+    console.log(`🔍 Checking for ${expectedFileCount} valid file links on comparison row ${rowNumber}...`);
+    
+    const validatedFiles = [];
+    
+    // Loop through expected number of files
+    for (let fileIndex = 1; fileIndex <= expectedFileCount; fileIndex++) {
+      const fileLinkXPath = `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/div/a[${fileIndex}]`;
+      
+      try {
+        console.log(`🔍 Validating file ${fileIndex}/${expectedFileCount} using XPath: ${fileLinkXPath}`);
+        
+        const fileLink = this.page.locator(`xpath=${fileLinkXPath}`);
+        
+        // Check if the file link is visible
+        if (await fileLink.isVisible({ timeout: 2000 })) {
+          console.log(`✅ Found file link ${fileIndex} on row ${rowNumber}`);
+          
+          // Get the href attribute
+          const href = await fileLink.getAttribute('href');
+          
+          if (!href) {
+            throw new Error(`File link ${fileIndex} on row ${rowNumber} does not have an href attribute`);
+          }
+          
+          console.log(`📋 File ${fileIndex} href: ${href}`);
+          
+          // Validate that the href is not empty and looks like a valid file URL
+          if (href.trim() === '' || href === '#' || href === 'javascript:void(0)') {
+            throw new Error(`File link ${fileIndex} on row ${rowNumber} has invalid href: ${href}`);
+          }
+          
+          // Convert relative URLs to absolute URLs if needed
+          let fullUrl = href;
+          if (href.startsWith('/')) {
+            const baseUrl = new URL(this.page.url()).origin;
+            fullUrl = baseUrl + href;
+          } else if (!href.startsWith('http')) {
+            fullUrl = new URL(href, this.page.url()).href;
+          }
+          
+          console.log(`🌐 Testing URL accessibility for file ${fileIndex}: ${fullUrl}`);
+          
+          // Test if the URL returns a successful HTTP response
+          try {
+            const response = await this.page.request.get(fullUrl, {
+              timeout: 15000, // 15 second timeout for file downloads
+              ignoreHTTPSErrors: true // In case of self-signed certificates
+            });
+            
+            const statusCode = response.status();
+            console.log(`📊 File ${fileIndex} HTTP Status: ${statusCode}`);
+            
+            if (statusCode >= 200 && statusCode < 300) {
+              console.log(`✅ File ${fileIndex} URL is accessible (${statusCode})`);
+            } else if (statusCode >= 300 && statusCode < 400) {
+              console.log(`🔄 File ${fileIndex} URL redirects (${statusCode}) - this may be acceptable`);
+            } else {
+              throw new Error(`File ${fileIndex} URL returned error status ${statusCode}`);
+            }
+            
+            // Optional: Check Content-Type header for file types
+            const contentType = response.headers()['content-type'];
+            if (contentType) {
+              console.log(`📄 File ${fileIndex} Content-Type: ${contentType}`);
+              
+              // Validate it's actually a file and not HTML error page
+              if (contentType.includes('text/html') && !href.includes('.html')) {
+                console.log(`⚠️  Warning: File ${fileIndex} expected file but got HTML content - may be an error page`);
+              }
+            }
+            
+          } catch (requestError) {
+            console.error(`❌ File ${fileIndex} HTTP request failed: ${requestError.message}`);
+            throw new Error(`File ${fileIndex} URL is not accessible: ${requestError.message}`);
+          }
+          
+          // Additional validation - check if it looks like a file URL
+          const validFilePattern = /\.(pdf|jpg|jpeg|png|gif|doc|docx|txt|csv|xlsx?|zip)$/i;
+          const isValidFileUrl = validFilePattern.test(href) || href.includes('/file/') || href.includes('/document/') || href.includes('download');
+          
+          if (!isValidFileUrl) {
+            console.log(`⚠️  Warning: File ${fileIndex} URL may not be a standard file URL pattern: ${href}`);
+          }
+          
+          // Verify the link is clickable
+          await expect(fileLink).toBeVisible();
+          
+          validatedFiles.push({
+            index: fileIndex,
+            href: href,
+            fullUrl: fullUrl
+          });
+          
+          console.log(`✅ File ${fileIndex} validated successfully: ${href}`);
+          
+        } else {
+          throw new Error(`File link ${fileIndex} not visible on row ${rowNumber}`);
+        }
+        
+      } catch (fileError) {
+        console.error(`❌ Failed to validate file ${fileIndex} on row ${rowNumber}:`, fileError.message);
+        throw new Error(`Could not validate file ${fileIndex} on row ${rowNumber}: ${fileError.message}`);
+      }
+    }
+    
+    // Final validation - ensure we found all expected files
+    if (validatedFiles.length === expectedFileCount) {
+      console.log(`✅ Successfully validated all ${expectedFileCount} files on comparison row ${rowNumber}`);
+      validatedFiles.forEach((file, index) => {
+        console.log(`  📄 File ${file.index}: ${file.href}`);
+      });
+    } else {
+      throw new Error(`Expected ${expectedFileCount} files but only validated ${validatedFiles.length} files on row ${rowNumber}`);
+    }
+    
+  } catch (error) {
+    console.error(`❌ Failed to validate ${expectedFileCount} files on row ${rowNumber}:`, error.message);
+    throw new Error(`Could not validate ${expectedFileCount} files on row ${rowNumber}: ${error.message}`);
+  }
+});
+
 Then('I can see {int} file\\(s) available in the Download File modal', async function(expectedFileCount) {
   // Use specific XPath for the file list container in the Download File modal
   const fileListXPath = '//*[@id="file-download-modal-description"]/div[2]/fieldset/div';
