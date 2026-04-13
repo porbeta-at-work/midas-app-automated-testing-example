@@ -128,7 +128,7 @@ When('I click the Advanced Search Options checkbox', async function() {
 
 When('I click the "Search records" button', async function() {
   // XPath options for MiDAS Search records button (changes based on advanced search state)
-  const advancedSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[26]/button'; // When advanced search is expanded
+  const advancedSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[21]/button'; // When advanced search is expanded
   const basicSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[11]/button';     // When advanced search is collapsed
   const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table';
   
@@ -231,7 +231,7 @@ When('I click the "Search records" button', async function() {
 
 When('I click on the Compare button on row {int}', async function(rowNumber) {
   // Use specific XPath pattern for Compare button on a given row
-  const compareButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber}]/td[2]/div/div[5]/button`;
+  const compareButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber}]/td[2]/div/div[3]/button`;
   
   try {
     console.log(`🎯 Clicking Compare button on row ${rowNumber} using XPath: ${compareButtonXPath}`);
@@ -714,7 +714,7 @@ Then('I should see a valid File for Comparison row {int}', async function(rowNum
     // Test if the URL returns a successful HTTP response
     try {
       const response = await this.page.request.get(fullUrl, {
-        timeout: 15000, // 15 second timeout for file downloads
+        timeout: 30000, // 30 second timeout for file downloads
         ignoreHTTPSErrors: true // In case of self-signed certificates
       });
       

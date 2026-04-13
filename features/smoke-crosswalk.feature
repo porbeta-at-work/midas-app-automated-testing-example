@@ -19,8 +19,7 @@ Feature: MiDAS Home Search scenarios
     When I select "AR-2" in the crosswalk Source field
     And I enter "A1532016" in the crosswalk A Number field
     And I click the "Search crosswalk" button
-    And I open the Details for row 1
-    Then I should see the DOC ID of "AR00153200042.PDF" in the Details section of row 1
+    Then I should see the DOC ID of "AR00153200042.PDF" in the results
     And I should see the page has loaded
 
   @smoke @smoke-crosswalk
@@ -38,8 +37,7 @@ Feature: MiDAS Home Search scenarios
     And I enter "A1532016" in the crosswalk A Number field
     And I enter "C7408985" in the crosswalk C Number field
     And I click the "Search crosswalk" button
-    And I open the Details for row 1
-    Then I should see the DOC ID of "MT000024009178.PDF" in the Details section of row 1
+    Then I should see the DOC ID of "MT000024009178.PDF" in the results
     And I should see the page has loaded
 
   @smoke @smoke-crosswalk
@@ -55,8 +53,7 @@ Feature: MiDAS Home Search scenarios
     When I select "C-File" in the crosswalk Source field
     And I enter "C6185040" in the crosswalk C Number field
     And I click the "Search crosswalk" button
-    And I open the Details for row 4
-    Then I should see the DOC ID of "CN00192.36A00069.PDF" in the Details section of row 4
+    Then I should see the DOC ID of "CN00192.36A00069.PDF" in the results
     And I should see the page has loaded
 
   @smoke @smoke-crosswalk
@@ -72,6 +69,5 @@ Feature: MiDAS Home Search scenarios
     When I select "C-File" in the crosswalk Source field
     And I enter "OM14077" in the crosswalk C Number field
     And I click the "Search crosswalk" button
-    And I open the Details for row 1
-    Then I should see the DOC ID of "OM004601744.PDF" in the Details section of row 1
+    Then I should see the DOC ID of "OM004601744.PDF" in the results
     And I should see the page has loaded

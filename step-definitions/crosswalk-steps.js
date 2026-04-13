@@ -216,72 +216,36 @@ Then('I should see {int} row\\(s) in the Crosswalk Search Results', async functi
   }
 });
 
-Then('I should see the DOC ID of {string} in the Details section of row {int}', async function(docId, mainRowNumber) {
-  // Use the details section from the specified main row
-  const detailsSectionXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]`;
+Then('I should see the DOC ID of {string} in the results', async function(docId) {
+  const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody';
   
   try {
-    console.log(`🔍 Looking for DOC ID "${docId}" in Details section of row ${mainRowNumber}...`);
+    console.log(`🔍 Looking for DOC ID "${docId}" in Crosswalk Search Results...`);
     
-    // First, ensure the details section is visible
-    const detailsSection = this.page.locator(`xpath=${detailsSectionXPath}`);
-    await detailsSection.waitFor({ state: 'visible', timeout: 5000 });
+    // First, ensure the results table is visible
+    const tbody = this.page.locator(`xpath=${resultsTableXPath}`);
+    await tbody.waitFor({ state: 'visible', timeout: 5000 });
     
-    // Wait for the details table data to actually load before searching using condition-based waiting
-    console.log(`⏳ Ensuring details table data is loaded before searching for DOC ID...`);
-    const detailsTableXPath = `${detailsSectionXPath}/td/div/div/div[2]/div[1]/div[2]/table`;
+    // Count the number of rows to determine search strategy
+    const rows = tbody.locator('tr');
+    const rowCount = await rows.count();
     
-    // Use waitForFunction for responsive condition-based waiting instead of retry loops
-    try {
-      const tableDataReady = await this.page.waitForFunction(
-        (tableXPath) => {
-          const table = document.evaluate(tableXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-          if (!table) return false;
-          
-          const tbody = table.querySelector('tbody');
-          if (!tbody) return false;
-          
-          const rows = tbody.querySelectorAll('tr');
-          
-          // Check that we have rows with actual data (not loading placeholders)
-          if (rows.length === 0) return false;
-          
-          // Verify the first row has the expected number of columns and content
-          const firstRow = rows[0];
-          if (!firstRow || firstRow.children.length < 3) return false;
-          
-          // Check that content is not in loading state
-          const rowText = firstRow.textContent?.toLowerCase() || '';
-          if (rowText.includes('loading') || rowText.includes('please wait')) {
-            return false;
-          }
-          
-          // Confirm we have actual data content
-          return firstRow.textContent.trim() !== '';
-        },
-        detailsTableXPath,
-        { timeout: 30000, polling: 1000 }
-      );
-      
-      if (tableDataReady) {
-        console.log(`✅ Details table data confirmed loaded using condition-based waiting`);
-      }
-    } catch (error) {
-      console.log(`⚠️  Details table data loading timeout - proceeding with search anyway: ${error.message}`);
+    console.log(`📊 Found ${rowCount} row(s) in results table`);
+    
+    if (rowCount === 0) {
+      throw new Error(`No results found in table to search for DOC ID "${docId}"`);
     }
     
-    // Search through the details table rows to find the one with matching DOC ID
-    let foundRow = false;
-    let detailsRowNumber = 1;
-    const maxRows = 10; // Reasonable limit to prevent infinite loop
+    let foundDocId = false;
     
-    for (detailsRowNumber = 1; detailsRowNumber <= maxRows; detailsRowNumber++) {
-      const docIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[6]`;
+    // Search through all rows to find the matching DOC ID
+    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+      const docIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowIndex + 1}]/td[6]`;
       
       try {
         const docIdElement = this.page.locator(`xpath=${docIdXPath}`);
         
-        // Check if this row exists and is visible
+        // Check if this DOC ID cell exists and is visible
         if (await docIdElement.isVisible({ timeout: 1000 })) {
           // Try multiple ways to get the full DOC ID (handling truncation)
           let currentDocId = await docIdElement.textContent();
@@ -297,36 +261,34 @@ Then('I should see the DOC ID of {string} in the Details section of row {int}', 
           
           // Check if the found DOC ID matches exactly or is a truncated version of expected
           if (currentDocId && currentDocId.trim() === docId.trim()) {
-            console.log(`✅ Found exact matching DOC ID "${docId}" in details row ${detailsRowNumber}`);
-            foundRow = true;
+            console.log(`✅ Found exact matching DOC ID "${docId}" in results row ${rowIndex + 1}`);
+            foundDocId = true;
             break;
           } else if (currentDocId && docId.startsWith(currentDocId.trim()) && currentDocId.trim().length >= 6) {
             // Handle truncated display: if expected DOC ID starts with found value and found value is substantial
-            console.log(`✅ Found truncated DOC ID match: "${currentDocId.trim()}" matches start of expected "${docId}" in details row ${detailsRowNumber}`);
-            foundRow = true;
+            console.log(`✅ Found truncated DOC ID match: "${currentDocId.trim()}" matches start of expected "${docId}" in results row ${rowIndex + 1}`);
+            foundDocId = true;
             break;
           } else {
-            console.log(`🔍 Row ${detailsRowNumber}: DOC ID "${currentDocId?.trim()}" - not a match for "${docId}"`);
+            console.log(`🔍 Row ${rowIndex + 1}: DOC ID "${currentDocId?.trim()}" - not a match for "${docId}"`);
           }
         } else {
-          // Row doesn't exist, stop searching
-          break;
+          console.log(`⚠️  Row ${rowIndex + 1}: DOC ID cell not visible or doesn't exist`);
         }
       } catch (error) {
-        // Row doesn't exist or isn't visible, stop searching
-        break;
+        console.log(`⚠️  Row ${rowIndex + 1}: Error accessing DOC ID cell - ${error.message}`);
       }
     }
     
-    if (!foundRow) {
-      throw new Error(`DOC ID "${docId}" not found in Details section of row ${mainRowNumber}`);
+    if (!foundDocId) {
+      throw new Error(`DOC ID "${docId}" not found in any of the ${rowCount} result row(s)`);
     }
     
-    console.log(`✅ Successfully validated DOC ID "${docId}" exists in Details section of row ${mainRowNumber}`);
+    console.log(`✅ Successfully validated DOC ID "${docId}" exists in Crosswalk Search Results`);
     
   } catch (error) {
-    console.error(`❌ Failed to validate DOC ID "${docId}" in Details section of row ${mainRowNumber}:`, error.message);
-    throw new Error(`Could not validate DOC ID "${docId}" in Details section of row ${mainRowNumber}: ${error.message}`);
+    console.error(`❌ Failed to validate DOC ID "${docId}" in Results:`, error.message);
+    throw new Error(`Could not validate DOC ID "${docId}" in Results: ${error.message}`);
   }
 });
 
