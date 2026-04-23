@@ -128,8 +128,8 @@ When('I click the Advanced Search Options checkbox', async function() {
 
 When('I click the "Search records" button', async function() {
   // XPath options for MiDAS Search records button (changes based on advanced search state)
-  const advancedSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[21]/button'; // When advanced search is expanded
-  const basicSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[11]/button';     // When advanced search is collapsed
+  const advancedSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[21]/div/button[1]'; // When advanced search is expanded
+  const basicSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[10]/div/button[1]';     // When advanced search is collapsed
   const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table';
   
   let buttonClicked = false;
@@ -523,7 +523,7 @@ When('I click the Compare button for DOC ID {string} in the Details section of r
     console.log(`🎯 Clicking Compare button for DOC ID "${docId}" in details row ${detailsRowNumber}...`);
     
     // Construct the Compare button XPath using the same detailsRowNumber where we found the DOC ID
-    const compareButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[1]/div/div[2]/button`;
+    const compareButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[1]/div/div[3]/button`;
     
     console.log(`📍 Using Compare button XPath: ${compareButtonXPath}`);
     console.log(`📋 Target: mainRow=${mainRowNumber + 1}, detailsRow=${detailsRowNumber}, DOC ID="${docId}"`);
@@ -893,7 +893,7 @@ Then('I should see {int} valid Files for Comparison row {int}', async function(e
 
 Then('I can see {int} file\\(s) available in the Download File modal', async function(expectedFileCount) {
   // Use specific XPath for the file list container in the Download File modal
-  const fileListXPath = '//*[@id="file-download-modal-description"]/div[2]/fieldset/div';
+  const fileListXPath = '//*[@id="file-download-modal-description"]/div/fieldset/div[1]';
   
   try {
     console.log(`🔍 Checking for ${expectedFileCount} file(s) in Download File modal using XPath: ${fileListXPath}`);

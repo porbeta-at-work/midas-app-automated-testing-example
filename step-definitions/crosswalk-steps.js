@@ -96,7 +96,7 @@ When('I enter {string} in the crosswalk C Number field', async function(value) {
 
 When('I click the "Search crosswalk" button', async function() {
   // Use specific XPath for MiDAS Search crosswalk button
-  const searchButtonXPath = '//*[@id="accordion-content-search"]/div/div[7]/button';
+  const searchButtonXPath = '//*[@id="accordion-content-search"]/div/div[7]/div/button[1]';
   const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table';
   
   try {
