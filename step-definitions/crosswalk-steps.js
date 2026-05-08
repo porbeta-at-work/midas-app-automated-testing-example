@@ -97,7 +97,7 @@ When('I enter {string} in the crosswalk C Number field', async function(value) {
 When('I click the "Search crosswalk" button', async function() {
   // Use specific XPath for MiDAS Search crosswalk button
   const searchButtonXPath = '//*[@id="accordion-content-search"]/div/div[7]/div/button[1]';
-  const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table';
+  const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table';
   
   try {
     console.log(`🎯 Clicking crosswalk search button using XPath: ${searchButtonXPath}`);
@@ -163,7 +163,7 @@ When('I click the "Search crosswalk" button', async function() {
 });
 
 Then('I should see {int} row\\(s) in the Crosswalk Search Results', async function(expectedRowCount) {
-  const tbodyXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody';
+  const tbodyXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody';
   
   try {
     console.log(`🔍 Checking for ${expectedRowCount} row(s) in Crosswalk Search Results using XPath: ${tbodyXPath}`);
@@ -217,7 +217,7 @@ Then('I should see {int} row\\(s) in the Crosswalk Search Results', async functi
 });
 
 Then('I should see the DOC ID of {string} in the results', async function(docId) {
-  const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody';
+  const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody';
   
   try {
     console.log(`🔍 Looking for DOC ID "${docId}" in Crosswalk Search Results...`);
@@ -240,7 +240,7 @@ Then('I should see the DOC ID of {string} in the results', async function(docId)
     
     // Search through all rows to find the matching DOC ID
     for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-      const docIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowIndex + 1}]/td[6]`;
+      const docIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${rowIndex + 1}]/td[6]/div/span`;
       
       try {
         const docIdElement = this.page.locator(`xpath=${docIdXPath}`);

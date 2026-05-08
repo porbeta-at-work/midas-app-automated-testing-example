@@ -130,7 +130,7 @@ When('I click the "Search records" button', async function() {
   // XPath options for MiDAS Search records button (changes based on advanced search state)
   const advancedSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[21]/div/button[1]'; // When advanced search is expanded
   const basicSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[10]/div/button[1]';     // When advanced search is collapsed
-  const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table';
+  const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table';
   
   let buttonClicked = false;
   let usedXPath = '';
@@ -231,7 +231,7 @@ When('I click the "Search records" button', async function() {
 
 When('I click on the Compare button on row {int}', async function(rowNumber) {
   // Use specific XPath pattern for Compare button on a given row
-  const compareButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber}]/td[2]/div/div[3]/button`;
+  const compareButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${rowNumber}]/td[2]/div/div[4]/button`;
   
   try {
     console.log(`🎯 Clicking Compare button on row ${rowNumber} using XPath: ${compareButtonXPath}`);
@@ -257,7 +257,7 @@ When('I click on the Compare button on row {int}', async function(rowNumber) {
 
 When('I open the Details for row {int}', async function(rowNumber) {
   // Use specific XPath pattern for Details button on a given row
-  const detailsButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber}]/td[1]/button`;
+  const detailsButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${rowNumber}]/td[1]/button`;
   
   try {
     console.log(`🎯 Clicking Details button on row ${rowNumber} using XPath: ${detailsButtonXPath}`);
@@ -275,7 +275,7 @@ When('I open the Details for row {int}', async function(rowNumber) {
     
     try {
       // Look for h3 containing "Details for" text specifically in the next row after the clicked row
-      const nextRowXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber + 1}]`;
+      const nextRowXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${rowNumber + 1}]`;
       const detailsHeader = this.page.locator(`xpath=${nextRowXPath}`).locator('h3').filter({ hasText: 'Details for' });
       await detailsHeader.waitFor({ state: 'visible', timeout: 5000 });
       
@@ -342,7 +342,7 @@ When('I open the Details for row {int}', async function(rowNumber) {
 
 When('I close the Details for row {int}', async function(rowNumber) {
   // Use the same XPath pattern for Details button (it's a toggle button)
-  const detailsButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber}]/td[1]/button`;
+  const detailsButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${rowNumber}]/td[1]/button`;
   
   try {
     console.log(`🎯 Closing Details for row ${rowNumber} using XPath: ${detailsButtonXPath}`);
@@ -360,7 +360,7 @@ When('I close the Details for row {int}', async function(rowNumber) {
     
     try {
       // Look for h3 containing "Details for" text specifically in the next row after the clicked row
-      const nextRowXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber + 1}]`;
+      const nextRowXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${rowNumber + 1}]`;
       const detailsHeader = this.page.locator(`xpath=${nextRowXPath}`).locator('h3').filter({ hasText: 'Details for' });
       
       // Wait for the details header to disappear (should become hidden)
@@ -369,7 +369,7 @@ When('I close the Details for row {int}', async function(rowNumber) {
       
     } catch (error) {
       // If waiting for 'hidden' fails, try alternative verification
-      const nextRowXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${rowNumber + 1}]`;
+      const nextRowXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${rowNumber + 1}]`;
       const nextRowElement = this.page.locator(`xpath=${nextRowXPath}`);
       
       // Check if the next row is no longer visible or doesn't contain details
@@ -402,7 +402,7 @@ When('I close the Details for row {int}', async function(rowNumber) {
 
 When('I click the Compare button for DOC ID {string} in the Details section of row {int}', async function(docId, mainRowNumber) {
   // Use the details section from the specified main row
-  const detailsSectionXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]`;
+  const detailsSectionXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${mainRowNumber + 1}]`;
   
   try {
     console.log(`🔍 Looking for DOC ID "${docId}" in Details section of row ${mainRowNumber}...`);
@@ -460,10 +460,10 @@ When('I click the Compare button for DOC ID {string} in the Details section of r
     
     // First pass: Look for exact matches, collect truncated matches as backup
     for (let detailsRowNumber = 1; detailsRowNumber <= maxRows; detailsRowNumber++) {
-      const docIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[5]`;
+      const docIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[5]/div/span`;
       
       try {
-        const docIdElement = this.page.locator(`xpath=${docIdXPath}`);
+        const docIdElement = this.page.locator(`xpath=${docIdXPath}`).first();
         
         // Check if this row exists and is visible
         if (await docIdElement.isVisible({ timeout: 1000 })) {
@@ -504,10 +504,12 @@ When('I click the Compare button for DOC ID {string} in the Details section of r
           }
         } else {
           // Row doesn't exist, stop searching
+          console.log(`⛔ Row ${detailsRowNumber}: DOC ID cell not visible. Stopping scan.`);
           break;
         }
       } catch (error) {
         // Row doesn't exist or isn't visible, stop searching
+        console.log(`⛔ Row ${detailsRowNumber}: Error accessing DOC ID cell: ${error.message}. Stopping scan.`);
         break;
       }
     }
@@ -523,7 +525,7 @@ When('I click the Compare button for DOC ID {string} in the Details section of r
     console.log(`🎯 Clicking Compare button for DOC ID "${docId}" in details row ${detailsRowNumber}...`);
     
     // Construct the Compare button XPath using the same detailsRowNumber where we found the DOC ID
-    const compareButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[1]/div/div[3]/button`;
+    const compareButtonXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[1]/div/div[4]/button`;
     
     console.log(`📍 Using Compare button XPath: ${compareButtonXPath}`);
     console.log(`📋 Target: mainRow=${mainRowNumber + 1}, detailsRow=${detailsRowNumber}, DOC ID="${docId}"`);
@@ -532,7 +534,7 @@ When('I click the Compare button for DOC ID {string} in the Details section of r
     const compareButton = this.page.locator(`xpath=${compareButtonXPath}`);
     
     // Double-check we're clicking the button in the correct row by verifying the DOC ID is still there
-    const verifyDocIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[5]`;
+    const verifyDocIdXPath = `//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table/tbody/tr[${mainRowNumber + 1}]/td/div/div/div[2]/div[1]/div[2]/table/tbody/tr[${detailsRowNumber}]/td[5]/div/span[1]`;
     const verifyDocIdElement = this.page.locator(`xpath=${verifyDocIdXPath}`);
     
     try {
@@ -593,7 +595,7 @@ When('I click the Compare button for DOC ID {string} in the Details section of r
 
 When('I open the Download File modal for Comparison row {int}', async function(rowNumber) {
   // Use specific XPath pattern for Download File modal button on comparison row
-  const downloadButtonXPath = `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[1]/div/div[1]/button`;
+  const downloadButtonXPath = `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[1]/div/div[2]/button`;
   
   try {
     console.log(`🎯 Opening Download File modal for Comparison row ${rowNumber} using XPath: ${downloadButtonXPath}`);
@@ -651,11 +653,11 @@ Then('I should see a valid File for Comparison row {int}', async function(rowNum
   
   const fileLinkXPaths = [
     // Try specific row number first (multiple rows scenario)
-    `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/a`,
+    `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[7]/a`,
     // Try specific row number with extra div wrapper
-    `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/div/a`,
+    `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[7]/div/a`,
     // Try single row scenario (no row index, with extra div)
-    `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr/td[5]/div/a`
+    `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr/td[7]/div/a`
   ];
   
   try {
@@ -767,7 +769,7 @@ Then('I should see a valid File for Comparison row {int}', async function(rowNum
 
 Then('I should see {int} valid Files for Comparison row {int}', async function(expectedFileCount, rowNumber) {
   // Validate multiple file links in a single comparison table row
-  // Uses XPath pattern: //*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/div/a[${loopIteration}]
+  // Uses XPath pattern: //*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[7]/div/a[${loopIteration}]
   
   try {
     console.log(`🔍 Checking for ${expectedFileCount} valid file links on comparison row ${rowNumber}...`);
@@ -776,7 +778,7 @@ Then('I should see {int} valid Files for Comparison row {int}', async function(e
     
     // Loop through expected number of files
     for (let fileIndex = 1; fileIndex <= expectedFileCount; fileIndex++) {
-      const fileLinkXPath = `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[5]/div/a[${fileIndex}]`;
+      const fileLinkXPath = `//*[@id="main-content"]/div/div/div/div[2]/div/div[2]/table/tbody/tr[${rowNumber}]/td[7]/div/a[${fileIndex}]`;
       
       try {
         console.log(`🔍 Validating file ${fileIndex}/${expectedFileCount} using XPath: ${fileLinkXPath}`);
