@@ -130,12 +130,12 @@ Feature: MiDAS Home Search Advanced scenarios
 
   @smoke @smoke-search-advanced
   Scenario: Check for an AR-2 result with multiple valid files
-    And I enter "\"A1362295\"" in the A Number field
+    And I enter "\"129/4351\"" in the C Number field
     And I click the Advanced Search Options checkbox
-    And I enter "\"L012303558\"" in the DOC ID field
+    And I enter "\"C008000445\"" in the DOC ID field
     And I click the "Search records" button
     And I open the Details for row 1
-    And I click the Compare button for DOC ID "AR00136200601.PDF" in the Details section of row 1
+    And I click the Compare button for DOC ID "OM00129402142.PDF" in the Details section of row 1
     Then I should see 2 valid Files for Comparison row 1
     And I should see the page has loaded
 

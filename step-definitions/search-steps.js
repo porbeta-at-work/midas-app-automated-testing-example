@@ -128,7 +128,7 @@ When('I click the Advanced Search Options checkbox', async function() {
 
 When('I click the "Search records" button', async function() {
   // XPath options for MiDAS Search records button (changes based on advanced search state)
-  const advancedSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[21]/div/button[1]'; // When advanced search is expanded
+  const advancedSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[22]/div/button[1]'; // When advanced search is expanded
   const basicSearchButtonXPath = '//*[@id="accordion-content-search"]/div/div[10]/div/button[1]';     // When advanced search is collapsed
   const resultsTableXPath = '//*[@id="accordion-content-results"]/div/div/div[2]/div[2]/div[2]/div/table';
   
